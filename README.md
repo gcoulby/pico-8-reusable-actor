@@ -8,9 +8,11 @@ Pico-8 is a fantasy console for making, sharing and playing tiny games and other
 
 |            | Used | Available | Percentage |
 | :--------- | :--- | :-------- | :--------- |
-| Tokens     | 944  | 8192      | 11%        |
-| Chars      | 4139 | 65535     | 6%         |
-| Compressed | 1465 | 15616     | 9%         |
+| Tokens     | 816  | 8192      | 10%        |
+| Chars      | 3216 | 65535     | 5%         |
+| Compressed | 1194 | 15616     | 8%         |
+
+(this is just for the actor class, not the demo)
 
 While this currently uses 11% of the available tokens, I intend to reduce this once I have finished the class. I also think that the size of class is acceptable given the functionality it provides. Admittedly, since this class supports multiple game types, it is a bit larger than it needs to be and could be pruned once it is applied to your game. If you have any suggestions on how to reduce the size of the class, please let me know. I'm open to suggestions.
 

@@ -18,7 +18,7 @@ function _init()
     --[[slide]]true,
     --[[_type]]type.side
     )
-    MAP_X = 4
+    MAP_X = 0
 end
 
 function _update60()
