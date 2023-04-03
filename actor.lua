@@ -5,8 +5,7 @@ function fmget(x,y,f)
   return fget(mget(x+MAP_X,y+MAP_Y),f) 
 end
 
-spr_col = {}
-function spr_col:new(sprites, flipX, flipY)
+function create_spr_col(sprites, flipX, flipY)
   local o = {}
   o.__index = self
   setmetatable(o, self)
@@ -39,13 +38,11 @@ function spr_col:new(sprites, flipX, flipY)
       end
       k+=1
     end
-
   end
   return o
 end
 
-anim = {}
-function anim:new(_spr_cols, delay)
+function create_anim(_spr_cols, delay)
   local o = {}
   o.__index = self
   setmetatable(o, self)
@@ -57,7 +54,7 @@ function anim:new(_spr_cols, delay)
   o.f=#_spr_cols
   o.spr_cols = {}
   for i=1,#_spr_cols do
-    o.spr_cols[i] = spr_col:new(_spr_cols[i])
+    o.spr_cols[i] = create_spr_col(_spr_cols[i])
   end
 
   o.draw = function(x, y)
@@ -102,21 +99,15 @@ function actor:new(x, y, w, h, flipX, flipY, dx, dy, max_dx, max_dy, max_jumps, 
   o.type=_type
   o.cur_anim="idle"
   o.air=false
-  o.last_dy=0
+  o.last_y=0
   o.jumps=0
   o.anims={
-    ["idle"]=anim:new({{{0}}},1),
-    ["run"]=anim:new({{{0}}},1),
-    ["jump"]=anim:new({{{0}}},1),
-    ["fall"]=anim:new({{{0}}},1),
-    ["slide"]=anim:new({{{0}}},1),
-  }
-
-  -- print
-  o.print = function()
-    print("dx= "..o.dx)
-    print("dy= "..o.dy)
-  end
+    ["idle"]=create_anim({{{0}}},1),
+    ["run"]=create_anim({{{0}}},1),
+    ["jump"]=create_anim({{{0}}},1),
+    ["fall"]=create_anim({{{0}}},1),
+    ["slide"]=create_anim({{{0}}},1),
+  } 
 
   o.chk_cols = function()
     local ct=false
@@ -193,7 +184,7 @@ function actor:new(x, y, w, h, flipX, flipY, dx, dy, max_dx, max_dy, max_jumps, 
   end
 
   o.jump = function()
-    o.last_dy=3
+    o.last_y=o.y
     if o.max_jumps == -1 or o.jumps < o.max_jumps then
       o.dy=3
       
@@ -206,8 +197,8 @@ function actor:new(x, y, w, h, flipX, flipY, dx, dy, max_dx, max_dy, max_jumps, 
   o.apply_forces = function()
     if(o.air and o.max_jumps~=0) then
       o.cur_anim="jump"
-      if(o.last_dy>=o.dy) o.cur_anim="fall"
-      o.last_dy=o.dy
+      if(o.last_y<=o.y) o.cur_anim="fall"
+      o.last_y=o.y
     end
     if(o.slide and o.air and ((o.chk_wall(0) and btn(0)) or (o.chk_wall(1) and btn(1)))) then
       o.cur_anim="slide"
@@ -222,7 +213,7 @@ function actor:new(x, y, w, h, flipX, flipY, dx, dy, max_dx, max_dy, max_jumps, 
   end
 
   o.add_anim = function(name, spr_cols, d)
-    o.anims[name]=anim:new(spr_cols, d)
+    o.anims[name]=create_anim(spr_cols, d)
   end
 
   o.draw = function()   

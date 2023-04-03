@@ -21,7 +21,7 @@ function _init()
     --[[cm]]true,
     --[[cw]]true,
     --[[slide]]true,
-    --[[_type]]type.top
+    --[[_type]]type.side
     ) 
     p.add_anim("idle", {
         {{64,65},{80,81}},
@@ -66,7 +66,7 @@ end
 
 function _update()
     if(in_menu) then
-        if(btnp(4)) then
+        if(btnp(5)) then
             in_menu = false
             p.x=59
             p.y=59
@@ -104,7 +104,7 @@ function _update()
             end
         end
     else
-        if(btnp(4)) then
+        if(btnp(5)) then
             in_menu = true
         end
         update_game()
@@ -130,22 +130,21 @@ function draw_menu()
     print("2. top-down", 0, 24, 7)
     print("3. flappy", 0, 32, 7)
 
-    print("press 🅾️ to start", 0, 48, 7)
-    print("when in game press 🅾️ to reset", 0, 56, 7)
+    print("press ❎ to start", 0, 48, 7)
+    print("when in game press ❎ to reset", 0, 56, 7)
+end
+
+function print_stats()
+    print("dx= "..p.dx)
+    print("dy= "..p.dy)
+    print("anim= "..p.cur_anim)
 end
 
 function draw_game()
     map(MAP_X, MAP_Y)
-    
-    if menu_pos == 3 then
-        norm.draw(59,59)
-        flipX.draw(20,59)
-        flipY.draw(59,20)
-        flipXY.draw(20,20)
-    else
-        p.print()
-        p.draw()
-    end
+
+    print_stats()
+    p.draw()
 end
 
 function update_game()
@@ -163,12 +162,14 @@ function update_game()
         a = p.acc
     end
     if(p.type==type.top and btn(2)) then
+        p.cur_anim = "run"
         b = -p.acc
     end
     if(p.type==type.top and btn(3)) then
+        p.cur_anim = "run"
         b = p.acc
     end
-    if(btnp(5)) then
+    if(btnp(4)) then
         p.jump()
     end
     p.moveX(a)
