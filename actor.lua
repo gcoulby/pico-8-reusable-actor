@@ -5,8 +5,79 @@ function fmget(x,y,f)
   return fget(mget(x+MAP_X,y+MAP_Y),f) 
 end
 
+spr_col = {}
+function spr_col:new(sprites, flipX, flipY)
+  local o = {}
+  o.__index = self
+  setmetatable(o, self)
+  o.flipX=flipX or false
+  o.flipY=flipY or false
+  o.sprites=sprites
+  o.draw = function(x, y)   
+    iSrt = 1
+    iEnd = #o.sprites
+    iInc = 1
+    jSrt = 1
+    jEnd = #o.sprites[1]
+    jInc = 1
+    if(o.flipY) then
+      iSrt = #o.sprites
+      iEnd = 1
+      iInc = -1
+    end
+    if(o.flipX) then
+      jSrt = #o.sprites[1]
+      jEnd = 1
+      jInc = -1
+    end
+    local k=0
+    for i=iSrt,iEnd,iInc do
+      local l=0
+      for j=jSrt,jEnd,jInc do
+        spr(o.sprites[i][j], x+(l)*8, y+(k)*8, 1, 1, o.flipX, o.flipY)
+        l+=1
+      end
+      k+=1
+    end
+
+  end
+  return o
+end
+
+anim = {}
+function anim:new(_spr_cols, delay)
+  local o = {}
+  o.__index = self
+  setmetatable(o, self)
+  o.flipX=false
+  o.flipY=false
+  o.t=1
+  o.i=1
+  o.d=delay
+  o.f=#_spr_cols
+  o.spr_cols = {}
+  for i=1,#_spr_cols do
+    o.spr_cols[i] = spr_col:new(_spr_cols[i])
+  end
+
+  o.draw = function(x, y)
+    o.spr_cols[o.i].flipX=o.flipX
+    o.spr_cols[o.i].flipY=o.flipY
+    o.spr_cols[o.i].draw(x, y)
+  end
+  o.update = function()
+    o.t+=1
+    if(o.t>=o.d) then
+      o.t=0
+      o.i+=1
+      if(o.i>=o.f) o.i=1
+    end
+  end
+  return o
+end
+
 actor = {}
-function actor:new(x, y, w, h, dx, dy, max_dx, max_dy, max_jumps, acc, boost, grav, fric, cm, cw, slide, _type)
+function actor:new(x, y, w, h, flipX, flipY, dx, dy, max_dx, max_dy, max_jumps, acc, boost, grav, fric, cm, cw, slide, _type)
   local o = {}
   o.__index = self
   setmetatable(o, self)
@@ -14,21 +85,32 @@ function actor:new(x, y, w, h, dx, dy, max_dx, max_dy, max_jumps, acc, boost, gr
   o.y=y
   o.w=w
   o.h=h
+  o.flipX=flipX or false
+  o.flipY=flipY or false
   o.dx=dx
   o.dy=dy
   o.max_dx=max_dx
   o.max_dy=max_dy
   o.max_jumps=max_jumps
-  o.jumps=0
   o.acc=acc
   o.boost=boost
   o.cm=cm
   o.cw=cw
   o.grav=grav
   o.fric=fric
-  o.air=false
   o.slide=slide
   o.type=_type
+  o.cur_anim="idle"
+  o.air=false
+  o.last_dy=0
+  o.jumps=0
+  o.anims={
+    ["idle"]=anim:new({{{0}}},1),
+    ["run"]=anim:new({{{0}}},1),
+    ["jump"]=anim:new({{{0}}},1),
+    ["fall"]=anim:new({{{0}}},1),
+    ["slide"]=anim:new({{{0}}},1),
+  }
 
   -- print
   o.print = function()
@@ -36,12 +118,10 @@ function actor:new(x, y, w, h, dx, dy, max_dx, max_dy, max_jumps, acc, boost, gr
     print("dy= "..o.dy)
   end
 
-  -- Collision Detection
   o.chk_cols = function()
     local ct=false
     local cb=false
 
-    -- if colliding with map tiles
     if(o.cm) then   
       local x1=o.x/8
       local x2=(o.x+(o.w-1))/8
@@ -49,7 +129,7 @@ function actor:new(x, y, w, h, dx, dy, max_dx, max_dy, max_jumps, acc, boost, gr
       local y2=(o.y+(o.h-1))/8
       ct=fmget(x1,y1,0) or fmget(x1,y2,0) or fmget(x2,y2,0) or fmget(x2,y1,0)
     end
-    -- if colliding with world bounds
+
     if(o.cw) then
       cb=(o.x<0 or o.x+o.w>128 or
                o.y<0 or o.y+o.h>128)
@@ -90,7 +170,7 @@ function actor:new(x, y, w, h, dx, dy, max_dx, max_dy, max_jumps, acc, boost, gr
   end
 
   o.moveX = function(acc)
-    local lx=o.x -- last x
+    local lx=o.x
     o.dx+=acc
     o.dx=mid(-o.max_dx,o.dx,o.max_dx)
     o.x+=o.dx
@@ -101,7 +181,7 @@ function actor:new(x, y, w, h, dx, dy, max_dx, max_dy, max_jumps, acc, boost, gr
   end
 
   o.moveY = function(boost)
-    local ly=o.y -- last y
+    local ly=o.y
     o.dy+=boost
     if (o.dy>0) then
       o.dy=mid(-o.max_dy,o.dy,o.max_dy)
@@ -113,6 +193,7 @@ function actor:new(x, y, w, h, dx, dy, max_dx, max_dy, max_jumps, acc, boost, gr
   end
 
   o.jump = function()
+    o.last_dy=3
     if o.max_jumps == -1 or o.jumps < o.max_jumps then
       o.dy=3
       
@@ -123,7 +204,13 @@ function actor:new(x, y, w, h, dx, dy, max_dx, max_dy, max_jumps, acc, boost, gr
   end
  
   o.apply_forces = function()
+    if(o.air and o.max_jumps~=0) then
+      o.cur_anim="jump"
+      if(o.last_dy>=o.dy) o.cur_anim="fall"
+      o.last_dy=o.dy
+    end
     if(o.slide and o.air and ((o.chk_wall(0) and btn(0)) or (o.chk_wall(1) and btn(1)))) then
+      o.cur_anim="slide"
       o.dy=0
       o.jumps=0
     end
@@ -134,14 +221,14 @@ function actor:new(x, y, w, h, dx, dy, max_dx, max_dy, max_jumps, acc, boost, gr
     o.moveY(0)
   end
 
-  -- Draw
-  o.draw = function()
-    -- rectfill(o.x, o.y, o.x+o.w, o.y+o.h, 7)
-    -- spr(1,o.x,o.y)
-    spr(3,o.x,o.y,1,2)
+  o.add_anim = function(name, spr_cols, d)
+    o.anims[name]=anim:new(spr_cols, d)
   end
 
-  -- Update
+  o.draw = function()   
+    o.anims[o.cur_anim].draw(o.x, o.y)
+  end
+
   o.update = function()
     o.apply_forces()
     if (o.chk_gnd()) then
@@ -152,7 +239,9 @@ function actor:new(x, y, w, h, dx, dy, max_dx, max_dy, max_jumps, acc, boost, gr
       o.air=true
     end
     if (o.chk_ceil()) o.dy=0
-    -- o.draw()
+    o.anims[o.cur_anim].flipX=o.flipX
+    o.anims[o.cur_anim].flipY=o.flipY
+    o.anims[o.cur_anim].update()
   end
 
   return o

@@ -26,15 +26,17 @@ While this currently uses 11% of the available tokens, I intend to reduce this o
 
 ☑️ Supports collision with map offsets
 
+☑️ Supports sprite collections (multiple sprites per actor/animation)
+
 ☑️ Supports movement
 
 ☑️ Supports gravity
 
 ☑️ Supports jumping
 
-⬛ Supports animations
+☑️ Supports animations
 
-⬛ Supports multiple animations
+☑️ Supports multiple animations
 
 ☑️ Supports multiple sprites
 
@@ -211,3 +213,7 @@ To learn the component parts of this class, I used the following resources:
 ### Map Collision
 
 [3] https://www.youtube.com/watch?v=Gs0XFViFxFs by [@DocRobsDev](https://twitter.com/DocRobsDev)
+
+### Animated Sprites
+
+[4] https://pixelfrog-assets.itch.io/pixel-adventure-2 by [Pixel Frog](https://pixelfrog-assets.itch.io/)
