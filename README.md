@@ -2,6 +2,10 @@
 
 This is a simple class for creating actors in Pico-8. It's a work in progress, I'm open to suggestions and improvements.
 
+This project is completely free to use and modify. If you appreciate my work, and would like to say thank you, you can buy me a coffee:
+
+[![ko-fi](https://www.vectorlogo.zone/logos/ko-fi/ko-fi-ar21.svg)](https://ko-fi.com/X8X64ELNE)
+
 Pico-8 is a fantasy console for making, sharing and playing tiny games and other computer programs. It is developed by Lexaloffle Games. You can find out more about Pico-8 here: https://www.lexaloffle.com/pico-8.php
 
 ## Cart Info
